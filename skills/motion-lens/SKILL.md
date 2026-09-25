@@ -6,42 +6,46 @@ description: Use when you need to understand how a website moves or feels rather
 # motion-lens
 
 ## Overview
-You cannot watch video. motion-lens drives a real headless Chrome (GPU) on a **deterministic virtual clock**, steps the page frame by frame through load, scroll (real wheel input) and pointer paths, and turns it into **still images you can read + a structured report** with measured timings, fitted easings/springs and the page's own declared animation definitions (CSS/WAAPI, GSAP/ScrollTrigger, Lenis, Framer Motion, three.js, shaders).
+You cannot watch video. motion-lens drives a real headless Chrome (GPU) on a **deterministic virtual clock** and steps the page frame by frame through load, scroll (real wheel input) and pointer paths. The output is **readable images plus a structured report**: measured timings, fitted easings and springs, and the page's own declared animations (CSS/WAAPI, GSAP/ScrollTrigger, Lenis, Framer Motion, three.js, shaders). An optional Gemini pass watches the footage and critiques how it feels.
 
-## Run it
-```bash
-MOTION_LENS=<plugin root>/bin/motion-lens   # plugin root = this skill's base dir/../..
-# if it says "chrome-headless-shell not found", run: $MOTION_LENS setup
-$MOTION_LENS recon <url|local-file|dir> --out <dir>           # intro + hover tour + scroll sweep + introspection
+A single run yields many images at 1–1.5k tokens each. **Don't read runs yourself by default. Delegate precise questions to `motion-analyst` subagents and keep only their compact answers.**
+
+## Delegate by default
+1. **Split** the need into precise, independent questions: one per site, section or interaction. Avoid a vague "analyse this site".
+2. **Brief** each question to its own `motion-analyst` (Agent tool, `subagent_type: motion-lens:motion-analyst`). **Launch independent briefs in one message so they run in parallel**, with at most 4 captures at once.
+3. **Follow up** on the same run through `SendMessage` to that agent; its images are still in its context. Alternatively, give a new agent the existing run dir. Don't recapture.
+4. **Keep** the answers. Open one of the `KEY IMAGES` paths yourself only when you must see it, for example to judge your own build against the reference.
+
+### Brief template
 ```
+Target: <url | local path>   Run dir: <--out path to create | existing dir to reuse>
+Question: <exact thing to find out, e.g. "duration, easing and stagger of the hero headline reveal">
+Scope: <section / selector / scroll range / interaction; suggested mode, e.g. pointer --target "a.cta">
+Context: <why, and what you'll do with it, e.g. "recreate in GSAP", "compare with my build at ./site">
+Return: standard answer shape[, with SNIPPET][, ≤N words][, full teardown]
+```
+Examples of good questions:
+- "What happens on hover over the nav links: properties, duration, easing, any cursor follower?"
+- "Map scroll sections 0–6000 px: pins, scrubbed vs triggered reveals, smoothing."
+- "Does the hero intro of my ./site match the reference timings? Report deltas only."
+- "Full teardown": one agent, up to 800 words.
+
+To check your own build, have one agent capture it and compare it against the reference run dir, reporting only the deltas.
+
+### When to run it yourself instead
+Only for a tiny check that needs one number or a yes/no and no images: run the CLI, then `grep` `report.md` or `report.json`. Don't read contact sheets in the main context unless the user asked to see them.
+
+## CLI reference (for writing briefs)
+`<plugin root>/bin/motion-lens`, where the plugin root is this skill's base dir/../..
+
 | mode | use for |
 |---|---|
-| `recon` | first look at any page (≈20–60 s) |
+| `recon` | first look at any page (≈20–60 s); hovers first-viewport elements only |
 | `timeline --intro 6` | loaders / intro choreography, frame-exact |
 | `scroll --step 300` | scroll storytelling, pins, scrubs, reveals (`--max-steps`, `--hold`) |
-| `pointer --target "#cta"` | hover states / magnetic buttons of one element anywhere on the page (auto-scrolls to it) |
-| `pointer --start-scroll <px> --targets 10` | hover tour of everything visible at a scroll position |
-| `inspect` | just the stack + declared definitions |
+| `pointer --target "#cta"` | hover of one element anywhere (auto-scrolls to it) |
+| `pointer --start-scroll <px> --targets 10` | hover tour at a scroll position |
+| `inspect` | stack + declared definitions only |
+| `--film`, then `review <dir> [--focus ".."]` | Gemini watches real-time footage and writes `gemini-review.md` (feel and pacing, not numbers) |
 
-Optional second opinion from a model that *can* watch video: capture with `--film`, then `$MOTION_LENS review <dir> [--focus "..."]` → `gemini-review.md` (timestamped choreography/pacing/feel critique; needs `GEMINI_API_KEY`, loaded from `~/.config/motion-lens/env`). Use it for feel, not numbers; verify its claims against the sheets.
-
-Local projects: pass the file or folder (served over http automatically). Run `$MOTION_LENS --help` for all options.
-
-`recon` hovers only elements in the **first viewport**; for anything lower use `pointer --target`. Element page positions are in `elements.json` (`rect` = x, page y, w, h).
-
-## Read the output (in this order)
-If `report.md` already answers the question (especially with declared values), images are only for confirmation.
-1. `report.md`: its **"Images to read"** list is ordered; read those images with the Read tool.
-2. `sheets/*.png`: labelled contact sheets (t=ms / scroll=px / +ms since hover) and hover crop strips. The drawn arrow = pointer position (headless has none).
-3. `plots/*-easing.png` (measured dots vs fits), `plots/scroll-map.png`, `plots/*-heat.png` (where pixels change, incl. WebGL).
-4. `report.json` for exact numbers; `shaders/` for captured GLSL/WGSL; `frames/` for any single frame at full res.
-
-For how to interpret each field and known limits, read `references/reading-guide.md`.
-
-## Rules
-- **Prefer declared over measured when both exist** (declared = the page's own CSS/GSAP values). Measured values matter when nothing is declared (JS/rAF/WebGL) and for how it actually feels.
-- `~name` = nearest named ease; the bezier fit is the precise curve. `≈` durations include an inferred slow tail.
-- A ⚠ on a hover target means the pointer landed on another layer; re-run `pointer` on that section.
-- Virtual-scroll sites (scroll position never moves) get estimated positions: trust the scroll sheet over per-element translation.
-- Image-heavy: for a full teardown, delegate to the `motion-analyst` subagent so frames stay out of your context.
-- To check your own build: capture it, compare its report/sheets against the reference run.
+The agent knows how to read the outputs and their caveats (declared beats measured, ⚠ hover misses, virtual-scroll estimates). Field meanings are in `references/reading-guide.md`.

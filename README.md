@@ -47,6 +47,10 @@ video, write a timestamped choreography/pacing/feel critique (`gemini-review.md`
 context. It needs `GEMINI_API_KEY`, e.g. in `~/.config/motion-lens/env` (chmod 600; loaded automatically, override the
 path with `MOTION_LENS_ENV`). Model: `--model` or `MOTION_LENS_GEMINI_MODEL` (default gemini-2.5-pro). `--film`
 keeps every 2nd frame in all phases so the footage is smooth.
+In Claude Code the skill has the main session **delegate precise questions to `motion-analyst` subagents**, several
+in parallel. Each subagent captures and reads the images in its own context and returns a compact answer: an ANSWER,
+a VALUES table with declared/measured sources, and the run dir with at most 3 key images. The main chat stays small.
+
 Then read `report.md` and the images it lists. `skills/motion-lens/references/reading-guide.md` explains every
 field and its limits.
 
