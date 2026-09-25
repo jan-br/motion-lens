@@ -1,0 +1,5 @@
+.browsers/
+motion-lens-runs/
+__pycache__/
+*.pyc
+fixtures/vendor/*/node_modules/

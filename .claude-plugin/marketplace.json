@@ -1,0 +1,14 @@
+{
+  "name": "motion-lens",
+  "owner": {
+    "name": "Jan"
+  },
+  "plugins": [
+    {
+      "name": "motion-lens",
+      "source": "./",
+      "description": "Perceive how websites move: frame-exact capture + motion analysis for Claude Code."
+    }
+  ],
+  "description": "Local marketplace for the motion-lens plugin (motion perception for websites)."
+}

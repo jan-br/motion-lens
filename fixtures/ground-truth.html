@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>motion-lens ground truth</title>
+<!-- Every animation here has a known definition (see ground-truth.json). The capture + analysis must recover them. -->
+<style>
+  html, body { margin: 0; background: #0e0e12; color: #eee; font: 500 18px/1.4 system-ui, sans-serif; }
+  section { position: relative; min-height: 100vh; padding: 80px; box-sizing: border-box; }
+  /* 1. CSS keyframe intro: 800ms, delay 200ms, cubic-bezier(0.16,1,0.3,1) */
+  #hero-title { font-size: 96px; margin: 0; animation: rise 800ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both; }
+  @keyframes rise { from { transform: translateY(80px); opacity: 0; } to { transform: none; opacity: 1; } }
+  /* 2. infinite loop: 2s linear rotation */
+  #spinner { position: absolute; right: 120px; top: 120px; width: 60px; height: 60px; border: 4px solid #ff5a1f; border-right-color: transparent; border-radius: 50%; animation: spin 2s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .cards { display: flex; gap: 24px; margin-top: 60px; }
+  .card { width: 180px; height: 120px; background: #2a3bff; border-radius: 12px; }
+  #spring { width: 60px; height: 60px; border-radius: 50%; background: #eee; margin-top: 60px; }
+  canvas#gl { position: absolute; right: 80px; bottom: 80px; width: 320px; height: 200px; }
+  /* 5. native CSS scroll-driven animation */
+  #sda-bar { position: fixed; left: 0; top: 0; height: 6px; width: 100%; background: #ff5a1f; transform-origin: 0 50%; animation: grow linear both; animation-timeline: scroll(root); }
+  @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  #pin-section { height: 100vh; overflow: hidden; }
+  #pin-box { width: 200px; height: 200px; background: #ff5a1f; border-radius: 16px; margin-top: 200px; }
+  /* 6. IntersectionObserver reveal: 600ms ease-out */
+  .reveal { opacity: 0; transform: translateY(40px); transition: opacity 600ms ease-out, transform 600ms ease-out; }
+  .reveal.in { opacity: 1; transform: none; }
+  /* 7. hover micro-interaction: 300ms back-out-ish bezier */
+  #btn { display: inline-block; margin-top: 40px; padding: 18px 36px; background: #ff5a1f; color: #0e0e12; border-radius: 40px; transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer; }
+  #btn:hover { transform: scale(1.08); }
+  #follower { position: fixed; left: 0; top: 0; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; border: 2px solid #eee; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="sda-bar"></div>
+<div id="follower"></div>
+<section id="intro">
+  <h1 id="hero-title">Ground truth</h1>
+  <div id="spinner"></div>
+  <div class="cards"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div>
+  <div id="spring"></div>
+  <canvas id="gl" width="640" height="400"></canvas>
+</section>
+<section id="pin-section"><div id="pin-box"></div></section>
+<section id="reveals">
+  <p class="reveal">Reveal one</p><p class="reveal">Reveal two</p><p class="reveal">Reveal three</p>
+  <div id="btn">Hover me</div>
+</section>
+<section id="outro"><p>End.</p></section>
+
+<script type="module">
+  // Loaded as ES modules: no window.gsap / window.Lenis globals (like a bundled production site).
+  import { gsap } from './vendor/gsap/index.js';
+  import { ScrollTrigger } from './vendor/gsap/ScrollTrigger.js';
+  import Lenis from './vendor/lenis/dist/lenis.mjs';
+  gsap.registerPlugin(ScrollTrigger);
+
+  // 8. Lenis smooth scroll, lerp 0.1, driven by GSAP's ticker
+  const lenis = new Lenis({ lerp: 0.1, respectReducedMotion: false });
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add((t) => lenis.raf(t * 1000));
+  gsap.ticker.lagSmoothing(0);
+
+  // 3. GSAP staggered intro: y 60 -> 0, opacity 0 -> 1, 1s power3.out, stagger 0.12, delay 0.5
+  gsap.from('.card', { y: 60, opacity: 0, duration: 1, ease: 'power3.out', stagger: 0.12, delay: 0.5 });
+
+  // 4. GSAP ScrollTrigger pin + scrub: #pin-box x 0 -> 600 over 1000px, scrub 1
+  gsap.to('#pin-box', { x: 600, ease: 'none', scrollTrigger: { trigger: '#pin-section', start: 'top top', end: '+=1000', pin: true, scrub: 1 } });
+
+  // 6. IntersectionObserver reveals
+  const io = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && e.target.classList.add('in')), { threshold: 0.2 });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+  // 9. hand-written spring (rAF): x 0 -> 300, zeta 0.35, omega_n 14 rad/s, starts 1.0 s after load
+  const spring = document.getElementById('spring');
+  const start = performance.now() + 1000;
+  const zeta = 0.35, wn = 14, wd = wn * Math.sqrt(1 - zeta * zeta);
+  (function tick() {
+    const t = Math.max(0, (performance.now() - start) / 1000);
+    const x = t <= 0 ? 0 : 300 * (1 - Math.exp(-zeta * wn * t) * (Math.cos(wd * t) + (zeta * wn / wd) * Math.sin(wd * t)));
+    spring.style.transform = `translateX(${x}px)`;
+    requestAnimationFrame(tick);
+  })();
+
+  // 7b. cursor follower: lerp 0.15 per frame toward the pointer
+  const f = document.getElementById('follower');
+  let mx = 0, my = 0, fx = 0, fy = 0;
+  addEventListener('mousemove', (e) => { mx = e.clientX; my = e.clientY; });
+  (function follow() { fx += (mx - fx) * 0.15; fy += (my - fy) * 0.15; f.style.transform = `translate(${fx}px, ${fy}px)`; requestAnimationFrame(follow); })();
+
+  // 10. WebGL shader with u_time
+  const gl = document.getElementById('gl').getContext('webgl');
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  const p = gl.createProgram();
+  gl.attachShader(p, sh(gl.VERTEX_SHADER, 'attribute vec2 a; void main(){ gl_Position = vec4(a, 0.0, 1.0); }'));
+  gl.attachShader(p, sh(gl.FRAGMENT_SHADER, 'precision mediump float; uniform float u_time; void main(){ vec2 uv = gl_FragCoord.xy / vec2(640.0, 400.0); gl_FragColor = vec4(0.5 + 0.5 * sin(u_time * 3.0 + uv.x * 6.0), uv.y, 0.8, 1.0); }'));
+  gl.linkProgram(p); gl.useProgram(p);
+  const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(p, 'a'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const ut = gl.getUniformLocation(p, 'u_time');
+  (function draw(ts) { gl.uniform1f(ut, ts / 1000); gl.drawArrays(gl.TRIANGLES, 0, 3); requestAnimationFrame(draw); })(0);
+</script>
+</body>
+</html>

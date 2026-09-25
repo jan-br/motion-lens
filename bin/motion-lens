@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# motion-lens: capture + analyse how a website moves.  See README.md / skills/motion-lens/SKILL.md
+set -uo pipefail
+ROOT="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
+NODE_FLAGS="--no-warnings"
+node -e 'process.exit(typeof WebSocket === "undefined" ? 1 : 0)' 2>/dev/null || NODE_FLAGS="$NODE_FLAGS --experimental-websocket"
+
+case "${1:-help}" in
+  setup)
+    mkdir -p "$HOME/.cache/motion-lens"
+    npx -y @puppeteer/browsers install chrome-headless-shell@stable --path "$HOME/.cache/motion-lens/browsers" || exit 1
+    python3 -m pip install --user -q numpy scipy pillow matplotlib opencv-python-headless 2>/dev/null \
+      || python3 -m pip install --user --break-system-packages -q numpy scipy pillow matplotlib opencv-python-headless
+    python3 -c "import numpy, scipy, PIL, matplotlib; print('python deps ok')"
+    ;;
+  analyze)
+    python3 "$ROOT/analyze/run.py" "${2:?usage: motion-lens analyze <run-dir>}"
+    ;;
+  validate)
+    python3 "$ROOT/tests/validate.py"
+    ;;
+  help|-h|--help)
+    node $NODE_FLAGS "$ROOT/capture/cli.mjs" --help
+    echo "other commands: motion-lens setup | motion-lens analyze <run-dir> | motion-lens validate"
+    ;;
+  *)
+    out="$(node $NODE_FLAGS "$ROOT/capture/cli.mjs" "$@" | tee /dev/stderr | tail -1)"
+    code=${PIPESTATUS[0]}
+    if [ -f "$out/samples.jsonl" ]; then
+      python3 "$ROOT/analyze/run.py" "$out" >/dev/null && echo "report: $out/report.md"
+    fi
+    exit $code
+    ;;
+esac

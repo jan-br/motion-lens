@@ -1,0 +1,16 @@
+{
+  "_note": "Known definitions in fixtures/ground-truth.html; tests/validate.py checks that motion-lens recovers them.",
+  "libraries": ["gsap", "ScrollTrigger", "lenis", "webgl"],
+  "animations": [
+    { "id": "css-intro", "selector": "#hero-title", "trigger": "load", "kind": "css-animation", "duration_ms": 800, "delay_ms": 200, "easing": "cubic-bezier(0.16, 1, 0.3, 1)", "props": { "translateY": [80, 0], "opacity": [0, 1] } },
+    { "id": "css-loop", "selector": "#spinner", "trigger": "load", "kind": "css-animation", "duration_ms": 2000, "iterations": "infinite", "easing": "linear", "props": { "rotate": [0, 360] } },
+    { "id": "gsap-stagger", "selector": ".card", "trigger": "load", "kind": "gsap", "duration_ms": 1000, "delay_ms": 500, "stagger_ms": 120, "ease": "power3.out", "props": { "y": [60, 0], "opacity": [0, 1] } },
+    { "id": "spring", "selector": "#spring", "trigger": "time", "start_ms": 1000, "kind": "raf-spring", "zeta": 0.35, "omega_n": 14.0, "props": { "translateX": [0, 300] } },
+    { "id": "pin-scrub", "selector": "#pin-box", "trigger": "scroll", "kind": "gsap-scrolltrigger", "pin": true, "scrub": 1, "scroll_range_px": 1000, "props": { "x": [0, 600] } },
+    { "id": "sda-bar", "selector": "#sda-bar", "trigger": "scroll", "kind": "css-scroll-timeline", "props": { "scaleX": [0, 1] } },
+    { "id": "reveals", "selector": ".reveal", "trigger": "intersection", "threshold": 0.2, "kind": "css-transition", "duration_ms": 600, "easing": "ease-out" },
+    { "id": "hover-btn", "selector": "#btn", "trigger": "hover", "kind": "css-transition", "duration_ms": 300, "easing": "cubic-bezier(0.34, 1.56, 0.64, 1)", "props": { "scale": [1, 1.08] } },
+    { "id": "follower", "selector": "#follower", "trigger": "pointer", "kind": "raf-lerp", "lerp_per_frame": 0.15 },
+    { "id": "lenis", "kind": "smooth-scroll", "lerp": 0.1 }
+  ]
+}
