@@ -2,6 +2,8 @@
 # motion-lens: capture + analyse how a website moves.  See README.md / skills/motion-lens/SKILL.md
 set -uo pipefail
 ROOT="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
+# private settings/secrets (e.g. GEMINI_API_KEY for `review`)
+if [ -f "${MOTION_LENS_ENV:-$HOME/.config/motion-lens/env}" ]; then set -a; . "${MOTION_LENS_ENV:-$HOME/.config/motion-lens/env}"; set +a; fi
 NODE_FLAGS="--no-warnings"
 node -e 'process.exit(typeof WebSocket === "undefined" ? 1 : 0)' 2>/dev/null || NODE_FLAGS="$NODE_FLAGS --experimental-websocket"
 
@@ -16,12 +18,16 @@ case "${1:-help}" in
   analyze)
     python3 "$ROOT/analyze/run.py" "${2:?usage: motion-lens analyze <run-dir>}"
     ;;
+  review)
+    shift
+    python3 "$ROOT/analyze/review.py" "$@"
+    ;;
   validate)
     python3 "$ROOT/tests/validate.py"
     ;;
   help|-h|--help)
     node $NODE_FLAGS "$ROOT/capture/cli.mjs" --help
-    echo "other commands: motion-lens setup | motion-lens analyze <run-dir> | motion-lens validate"
+    echo "other commands: motion-lens setup | analyze <run-dir> | review <run-dir> [--focus text] (Gemini watches the capture) | validate"
     ;;
   *)
     out="$(node $NODE_FLAGS "$ROOT/capture/cli.mjs" "$@" | tee /dev/stderr | tail -1)"

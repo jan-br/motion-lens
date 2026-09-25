@@ -40,7 +40,13 @@ bin/motion-lens inspect <url>                                   # stack + declar
 bin/motion-lens <mode> ./my-site/                               # local files/folders are served automatically
 bin/motion-lens analyze <run-dir>                               # re-run the analysis
 bin/motion-lens validate                                        # ground-truth test suite
+bin/motion-lens recon <url> --film --out runs/x && bin/motion-lens review runs/x   # + Gemini watches it play
 ```
+`review` (optional) assembles the captured frames into real-time footage (`review.mp4`) and has Gemini, which can watch
+video, write a timestamped choreography/pacing/feel critique (`gemini-review.md`) with the measured report as
+context. It needs `GEMINI_API_KEY`, e.g. in `~/.config/motion-lens/env` (chmod 600; loaded automatically, override the
+path with `MOTION_LENS_ENV`). Model: `--model` or `MOTION_LENS_GEMINI_MODEL` (default gemini-2.5-pro). `--film`
+keeps every 2nd frame in all phases so the footage is smooth.
 Then read `report.md` and the images it lists. `skills/motion-lens/references/reading-guide.md` explains every
 field and its limits.
 

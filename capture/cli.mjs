@@ -31,6 +31,7 @@ options:
   --no-gpu             software rendering (SwiftShader)
   --no-rewrite         do not rewrite scripts to expose bundled GSAP/Lenis
   --png                lossless frames (default JPEG q82)
+  --film               keep every 2nd frame in all phases (smooth 30 fps footage, e.g. for motion-lens review)
 `;
 
 function parseArgs(argv) {
@@ -39,7 +40,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (!a.startsWith('--')) { o._.push(a); continue; }
     const k = a.slice(2);
-    if (['mobile', 'reduced-motion', 'no-gpu', 'no-rewrite', 'png', 'no-sweep', 'help'].includes(k)) o[k] = true;
+    if (['mobile', 'reduced-motion', 'no-gpu', 'no-rewrite', 'png', 'no-sweep', 'help', 'film'].includes(k)) o[k] = true;
     else o[k] = argv[++i];
   }
   return o;
@@ -153,10 +154,10 @@ async function pointerTour(rec, o) {
     const tg = { ...tg0, ...now, text: tg0.text || now.text || '' };
     rec.beginPhase(`hover:${ti}`, { target: tg });
     const startFrame = rec.i;
-    await glide(tg.x, tg.y, travel, 3);
+    await glide(tg.x, tg.y, travel, o.film ? 2 : 3);
     const check = await rec.s.evaluate(`__ml.locate(${JSON.stringify(tg0.sel)})`);
     rec.phases[rec.phases.length - 1].target.hitAtArrival = check ? check.hit : false;
-    for (let f = 0; f < hold; f++) await rec.frame({ shot: f % 3 === 0 });
+    for (let f = 0; f < hold; f++) await rec.frame({ shot: f % (o.film ? 2 : 3) === 0 });
     const out = await rec.s.evaluate(`__ml.neutralPoint(${tg.x}, ${tg.y}, ${tg.w}, ${tg.h})`);
     await glide(out.x, out.y, Math.round(travel * 0.7), 3);
     for (let f = 0; f < Math.round(0.4 * fps); f++) await rec.frame({ shot: f % 3 === 0 });
@@ -181,6 +182,7 @@ async function main() {
   let [mode, target] = o._.length === 1 ? ['recon', o._[0]] : o._;
   if (!['recon', 'timeline', 'scroll', 'pointer', 'inspect'].includes(mode)) { console.error('unknown mode ' + mode + '\n' + HELP); process.exit(2); }
   o.fps = Number(o.fps) || 60;
+  if (o.film) { o['intro-shot'] = o['intro-shot'] || 2; o['scroll-shots'] = o['scroll-shots'] || 2; }
   const [W, H] = (o.viewport || (o.mobile ? '390x844' : '1440x900')).split('x').map(Number);
 
   let url = target, server = null;

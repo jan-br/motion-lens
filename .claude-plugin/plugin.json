@@ -1,7 +1,7 @@
 {
   "name": "motion-lens",
   "description": "Perceive how websites move: deterministic frame-exact capture of intros, scroll, hover and WebGL in headless Chrome, turned into readable contact sheets plus measured timings, easings, springs and the page's own animation definitions.",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "author": { "name": "Jan" },
   "license": "MIT",
   "keywords": ["motion", "animation", "scroll", "gsap", "webgl", "easing", "design"]

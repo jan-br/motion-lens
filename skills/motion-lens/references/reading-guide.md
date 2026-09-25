@@ -26,6 +26,8 @@
 - **Scroll smoothing**: lerp per frame (Lenis-style) → time constant and ~95 % settle time.
 - **Cursor follower**: element tracking the pointer, lerp/frame and lag.
 
+- **gemini-review.md** (only after `review`): Gemini watched `review.mp4`, the frames played back in real time (phase start times listed at the end). Good at overall choreography, pacing and "feel"; it can invent or misplace details (e.g. call a parallax a pin), so confirm specifics in the sheets and report. Without `--film`, scroll phases are one frame per step, so footage there jumps.
+
 ## Limits
 - Headless Chrome, 1440×900 default, `(hover:hover)` forced on. Sites that detect bots or GPU tier may differ.
 - Measured timings are only as good as DOM sampling: canvas/WebGL content has no element data — read the sheets/heatmaps and shaders.

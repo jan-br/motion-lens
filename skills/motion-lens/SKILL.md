@@ -23,6 +23,8 @@ $MOTION_LENS recon <url|local-file|dir> --out <dir>           # intro + hover to
 | `pointer --start-scroll <px> --targets 10` | hover tour of everything visible at a scroll position |
 | `inspect` | just the stack + declared definitions |
 
+Optional second opinion from a model that *can* watch video: capture with `--film`, then `$MOTION_LENS review <dir> [--focus "..."]` → `gemini-review.md` (timestamped choreography/pacing/feel critique; needs `GEMINI_API_KEY`, loaded from `~/.config/motion-lens/env`). Use it for feel, not numbers; verify its claims against the sheets.
+
 Local projects: pass the file or folder (served over http automatically). Run `$MOTION_LENS --help` for all options.
 
 `recon` hovers only elements in the **first viewport**; for anything lower use `pointer --target`. Element page positions are in `elements.json` (`rect` = x, page y, w, h).
