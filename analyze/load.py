@@ -87,4 +87,7 @@ def load_run(path) -> Run:
                 a[i] = a[i - 1]
     extra = {'st': [r.get('st') for r in rows], 'video': [r.get('video') for r in rows], 'cam': [r.get('cam') for r in rows]}
     extra['virtualScroll'] = bool(virtual)
+    in_scroll = np.array([p.startswith('scroll') for p in phase])
+    extra['scrollPhase'] = bool(in_scroll.any() and wheel[in_scroll].any())
+    extra['scrollMoved'] = bool(extra['scrollPhase'] and np.nanmax(np.abs(scroll[in_scroll])) > 50)
     return Run(d, meta, elements, inspect, anims, t, phase, scroll, sy, lenis, mouse, wheel, shots, tracks, extra)

@@ -262,6 +262,11 @@ def render_md(run, R):
     decl_lenis = (R['declared'].get('lenis') or [None])[0]
     if sm:
         L.append(f"\n**Scroll smoothing (measured{', virtual scroll' if (R.get('scroll') or {}).get('virtualScroll') else ''}):** lerp {sm['lerp_per_frame']}/frame" + (f" → time constant ≈{sm['time_constant_ms']} ms, ~95% settled in ≈{sm['settle_95_ms']} ms" if sm.get('time_constant_ms') else '') + f" ({sm['source']})" + (f". Declared Lenis options: `{json.dumps(decl_lenis)[:200]}`" if decl_lenis else ''))
+    run_x = getattr(run, 'extra', {}) or {}
+    if run_x.get('scrollPhase') and not run_x.get('scrollMoved'):
+        L.append("\n**Page did not scroll:** wheel input moved neither the native scroll position nor any layer "
+                 "(single-screen page, drag/click navigation, a nested scroller or scroll locked by an overlay). "
+                 "Scroll analysis is empty; check `sheets/scroll.png` and try `pointer`/`timeline` or a different entry URL.")
     L.append('\n## Images to read (in this order)')
     for i, im in enumerate(R['images'], 1):
         L.append(f"{i}. `{im['path']}`: {im['what']}")
