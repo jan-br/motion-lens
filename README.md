@@ -22,11 +22,13 @@ An agent can't watch video, and screenshots miss timing, easing and interaction.
    maps and motion heatmaps, plus `report.md` / `report.json`.
 
 ## Install
-```bash
-bin/motion-lens setup        # chrome-headless-shell -> ~/.cache/motion-lens, python deps
-# as a Claude Code plugin (skill + motion-analyst subagent):
-claude plugin marketplace add ~/projects/motion-lens && claude plugin install motion-lens@motion-lens
+As a Claude Code plugin (skill + motion-analyst subagent), inside Claude Code:
 ```
+/plugin marketplace add jan-br/motion-lens
+/plugin install motion-lens@motion-lens
+```
+Then once, from the installed plugin directory (or a clone): `bin/motion-lens setup` (chrome-headless-shell →
+~/.cache/motion-lens, python deps). From a local clone instead: `claude plugin marketplace add ./motion-lens`.
 Needs Node ≥ 21, Python 3 (numpy, scipy, pillow, matplotlib; OpenCV optional) and ffmpeg (not required). A GPU is
 recommended; use `--no-gpu` for SwiftShader.
 
